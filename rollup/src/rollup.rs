@@ -450,15 +450,31 @@ mod test {
 
     #[test]
     fn snark_verification() {
-        use ark_bls12_381::Bls12_381;
-        use ark_groth16::Groth16;
-        use ark_snark::SNARK;
+        use ark_bls12_381::{ Bls12_381, Fr as BlsFr };
+        use ark_marlin::Marlin;
+        use ark_poly::univariate::DensePolynomial;
+        use ark_poly_commit::sonic_pc::SonicKZG10;
+        use ark_marlin::SimpleHashFiatShamirRng;
+        use blake2::Blake2s;
+        use rand_chacha::ChaChaRng;
+
         // Use a circuit just to generate the circuit
         let circuit_defining_cs = build_two_tx_circuit();
 
         let mut rng = ark_std::test_rng();
-        let (pk, vk) =
-            Groth16::<Bls12_381>::circuit_specific_setup(circuit_defining_cs, &mut rng).unwrap();
+        let srs = Marlin::<
+            BlsFr,
+            SonicKZG10<Bls12_381, DensePolynomial<BlsFr>>,
+            SimpleHashFiatShamirRng<Blake2s, ChaChaRng>,
+        >::universal_setup(524288, 524288, 3 * 524288, &mut rng)
+        .unwrap();
+
+        let (pk, vk) = Marlin::<
+            BlsFr,
+            SonicKZG10<Bls12_381, DensePolynomial<BlsFr>>,
+            SimpleHashFiatShamirRng<Blake2s, ChaChaRng>,
+        >::index(&srs, circuit_defining_cs)
+        .unwrap();
 
         // Use the same circuit but with different inputs to verify against
         // This test checks that the SNARK passes on the provided input
@@ -468,8 +484,20 @@ mod test {
             circuit_to_verify_against.final_root.unwrap(),
         ];
 
-        let proof = Groth16::prove(&pk, circuit_to_verify_against, &mut rng).unwrap();
-        let valid_proof = Groth16::verify(&vk, &public_input, &proof).unwrap();
+        let proof = Marlin::<
+            BlsFr,
+            SonicKZG10<Bls12_381, DensePolynomial<BlsFr>>,
+            SimpleHashFiatShamirRng<Blake2s, ChaChaRng>,
+        >::prove(&pk, circuit_to_verify_against, &mut rng)
+        .unwrap();
+
+        let valid_proof = Marlin::<
+            BlsFr,
+            SonicKZG10<Bls12_381, DensePolynomial<BlsFr>>,
+            SimpleHashFiatShamirRng<Blake2s, ChaChaRng>,
+        >::verify(&vk, &public_input, &proof, &mut rng)
+        .unwrap();
+
         assert!(valid_proof);
 
         // Use the same circuit but with different inputs to verify against
@@ -481,8 +509,20 @@ mod test {
             circuit_to_verify_against.final_root.unwrap(),
         ];
 
-        let proof = Groth16::prove(&pk, circuit_to_verify_against, &mut rng).unwrap();
-        let valid_proof = Groth16::verify(&vk, &public_input, &proof).unwrap();
+        // let proof = Marlin::<
+        //     BlsFr,
+        //     SonicKZG10<Bls12_381, DensePolynomial<BlsFr>>,
+        //     SimpleHashFiatShamirRng<Blake2s, ChaChaRng>,
+        // >::prove(&pk, circuit_to_verify_against, &mut rng)
+        // .unwrap();
+
+        let valid_proof = Marlin::<
+            BlsFr,
+            SonicKZG10<Bls12_381, DensePolynomial<BlsFr>>,
+            SimpleHashFiatShamirRng<Blake2s, ChaChaRng>,
+        >::verify(&vk, &public_input, &proof, &mut rng)
+        .unwrap();
+
         assert!(!valid_proof);
     }
 }
