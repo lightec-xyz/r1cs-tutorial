@@ -50,7 +50,7 @@ impl ConstraintSynthesizer<ConstraintF> for MerkleTreeVerification {
             Ok(self.authentication_path.as_ref().unwrap())
         })?;
 
-        let leaf_bytes = vec![leaf; 1];
+        let leaf_bytes = vec![leaf; 1];  //将一个u8 的value 转换成Vec
 
         // Now, we have to check membership. How do we do that?
         // Hint: look at https://github.com/arkworks-rs/crypto-primitives/blob/6be606259eab0aec010015e2cfd45e4f134cd9bf/src/merkle_tree/constraints.rs#L135

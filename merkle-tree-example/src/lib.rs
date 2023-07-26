@@ -3,13 +3,13 @@ use ark_crypto_primitives::merkle_tree::{Config, MerkleTree, Path};
 
 pub mod common;
 use common::*;
-
+    
 mod constraints;
 // mod constraints_test;
 
 #[derive(Clone)]
-pub struct MerkleConfig;
-impl Config for MerkleConfig {
+pub struct MerkleConfig;  //空结构体
+impl Config for MerkleConfig {  //impl Config trait
     // Our Merkle tree relies on two hashes: one to hash leaves, and one to hash pairs
     // of internal nodes.
     type LeafHash = LeafHash;

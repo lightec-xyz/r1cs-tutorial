@@ -8,7 +8,7 @@ use ark_crypto_primitives::crh::{
 };
 use ark_ed_on_bls12_381::{constraints::EdwardsVar, EdwardsProjective};
 
-pub type TwoToOneHash = PedersenCRHCompressor<EdwardsProjective, TECompressor, TwoToOneWindow>;
+pub type TwoToOneHash = PedersenCRHCompressor<EdwardsProjective, TECompressor, TwoToOneWindow>; //把PedersenCRHCompressor赋值给TwoToOneHash
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct TwoToOneWindow;
 
@@ -18,7 +18,7 @@ impl pedersen::Window for TwoToOneWindow {
     const NUM_WINDOWS: usize = 128;
 }
 
-pub type LeafHash = PedersenCRHCompressor<EdwardsProjective, TECompressor, LeafWindow>;
+pub type LeafHash = PedersenCRHCompressor<EdwardsProjective, TECompressor, LeafWindow>;  //把PedersenCRHCompressor赋值给LeafHash
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct LeafWindow;
