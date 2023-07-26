@@ -4,28 +4,32 @@ use ark_crypto_primitives::crh::sha256::{
     Sha256,
     constraints::{UnitVar,Sha256Gadget}
 };
+use ark_ff::{PrimeField, Field};
 use ark_ed_on_bls12_381::Fq;
 use ark_r1cs_std::prelude::*;
 use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError};
 
-pub type F = ark_ed_on_bls12_381::Fq;
+// pub type F = ark_ed_on_bls12_381::Fq;
 
 
-pub struct Sha256BytesCircuit {
+//这里可以使用Vec<u8>作为输入，也可以用Vec<UInt8<ConstraintF>>，应该用哪一个？
+pub struct Sha256BytesGadget {
     pub input: Vec<u8>,
-    // pub output: Vec<u8>,
+    pub output: Vec<u8>
 }
 
 
-impl ConstraintSynthesizer<F> for Sha256BytesCircuit {
+impl <ConstraintF: PrimeField> ConstraintSynthesizer<ConstraintF> for Sha256BytesGadget{
     fn generate_constraints(
         self,
-        cs: ConstraintSystemRef<F>,
+        cs: ConstraintSystemRef<ConstraintF>,
     ) -> Result<(), SynthesisError> {
-        let input_var: Vec<UInt8<_>> = UInt8::new_input_vec(ark_relations::ns!(cs, "input"), &self.input).unwrap();
+        let input_var: Vec<UInt8<_>> = UInt8::new_witness_vec(ark_relations::ns!(cs, "input"), &self.input).unwrap();
         let param_var = UnitVar::default();
 
-         < Sha256Gadget<F> as CRHSchemeGadget<Sha256, F>>::evaluate(&param_var, &input_var).unwrap();
+        let digest_var = < Sha256Gadget<ConstraintF> as CRHSchemeGadget<Sha256, ConstraintF>>::evaluate(&param_var, &input_var).unwrap();
+        
+        let output_bytes = digest_var.to_bytes().into(Vec<u8>);
 
         Ok(())
     }
