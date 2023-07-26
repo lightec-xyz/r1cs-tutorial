@@ -12,19 +12,11 @@ use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisE
 // pub type F = ark_ed_on_bls12_381::Fq;
 
 
-//使用Vec<u8>作为输入，
+//使用Vec<u8>作为输入，MerkleTreeVerification 中的输入参数是Vec<u8>
 pub struct Sha256BytesGadget1 {
     pub input: Vec<u8>,
     pub output: Vec<u8>  //output 应该是可以mut的，以便带出计算结果
 }
-
-
-//使用Vec<UInt8<ConstraintF>>
-pub struct Sha256BytesGadget2 <ConstraintF:PrimeField> {
-    pub input: Vec<UInt8<ConstraintF>>,
-    pub output: Vec<UInt8<ConstraintF>>
-}
-
 
 impl <ConstraintF: PrimeField> ConstraintSynthesizer<ConstraintF> for Sha256BytesGadget1{
     fn generate_constraints(
@@ -32,6 +24,7 @@ impl <ConstraintF: PrimeField> ConstraintSynthesizer<ConstraintF> for Sha256Byte
         cs: ConstraintSystemRef<ConstraintF>,
     ) -> Result<(), SynthesisError> {
         //此处将Vec<u8> 转换为 Vec<UInt8<ConstraintF>>, 显式的加了约束。
+        
         let input_var: Vec<UInt8<_>> = UInt8::new_witness_vec(ark_relations::ns!(cs, "input"), &self.input).unwrap();
         let param_var = UnitVar::default();
 
@@ -50,12 +43,22 @@ impl <ConstraintF: PrimeField> ConstraintSynthesizer<ConstraintF> for Sha256Byte
     }
 }
 
+//使用Vec<UInt8<ConstraintF>>，Sha256Gadget的输入参数是Vec<UInt8<ConstraintF>>这种形式
+pub struct Sha256BytesGadget2 <ConstraintF:PrimeField> {
+    pub input: Vec<UInt8<ConstraintF>>,
+    pub output: Vec<UInt8<ConstraintF>>
+}
+
+
+
+
 impl <ConstraintF: PrimeField> ConstraintSynthesizer<ConstraintF> for Sha256BytesGadget2<ConstraintF>{
     fn generate_constraints(
         self,
         cs: ConstraintSystemRef<ConstraintF>,
     ) -> Result<(), SynthesisError> {
         //self.input 输入给evalute时没有显式的加约束关系，是隐式的加了吗？
+        // Sha256Gadget的输入参数是Vec<UInt8<ConstraintF>>这种形式
         let param_var = UnitVar::default();
         let digest_var = < Sha256Gadget<ConstraintF> as CRHSchemeGadget<Sha256, ConstraintF>>::evaluate(&param_var, &self.input).unwrap();
         
