@@ -12,28 +12,61 @@ use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisE
 // pub type F = ark_ed_on_bls12_381::Fq;
 
 
-//这里可以使用Vec<u8>作为输入，也可以用Vec<UInt8<ConstraintF>>，应该用哪一个？
-pub struct Sha256BytesGadget {
+//使用Vec<u8>作为输入，
+pub struct Sha256BytesGadget1 {
     pub input: Vec<u8>,
-    pub output: Vec<u8>
+    pub output: Vec<u8>  //output 应该是可以mut的，以便带出计算结果
 }
 
 
-impl <ConstraintF: PrimeField> ConstraintSynthesizer<ConstraintF> for Sha256BytesGadget{
+//使用Vec<UInt8<ConstraintF>>
+pub struct Sha256BytesGadget2 <ConstraintF:PrimeField> {
+    pub input: Vec<UInt8<ConstraintF>>,
+    pub output: Vec<UInt8<ConstraintF>>
+}
+
+
+impl <ConstraintF: PrimeField> ConstraintSynthesizer<ConstraintF> for Sha256BytesGadget1{
     fn generate_constraints(
         self,
         cs: ConstraintSystemRef<ConstraintF>,
     ) -> Result<(), SynthesisError> {
+        //此处将Vec<u8> 转换为 Vec<UInt8<ConstraintF>>, 显式的加了约束。
         let input_var: Vec<UInt8<_>> = UInt8::new_witness_vec(ark_relations::ns!(cs, "input"), &self.input).unwrap();
         let param_var = UnitVar::default();
 
         let digest_var = < Sha256Gadget<ConstraintF> as CRHSchemeGadget<Sha256, ConstraintF>>::evaluate(&param_var, &input_var).unwrap();
-        
-        let output_bytes = digest_var.to_bytes().into(Vec<u8>);
+     
+        //将digest_var 转换为Vec<u8>
+        let mut digest_bytes: Vec<u8> = vec![];
+        for e in digest_var.to_bytes().unwrap() {
+            digest_bytes.push(e.value().unwrap());
+        }
 
+        //如何赋值给self.output，赋值过程需要加约束吗？
+        self.output = digest_bytes;
+    
         Ok(())
     }
 }
+
+impl <ConstraintF: PrimeField> ConstraintSynthesizer<ConstraintF> for Sha256BytesGadget2<ConstraintF>{
+    fn generate_constraints(
+        self,
+        cs: ConstraintSystemRef<ConstraintF>,
+    ) -> Result<(), SynthesisError> {
+        //self.input 输入给evalute时没有显式的加约束关系，是隐式的加了吗？
+        let param_var = UnitVar::default();
+        let digest_var = < Sha256Gadget<ConstraintF> as CRHSchemeGadget<Sha256, ConstraintF>>::evaluate(&param_var, &self.input).unwrap();
+        
+
+        //如何赋值给self.output，赋值过程需要加约束吗？
+        self.output = digest_var.to_bytes().unwrap();
+    
+        Ok(())
+    }
+}
+
 
 #[test]
 fn test_crh_sha256() {
