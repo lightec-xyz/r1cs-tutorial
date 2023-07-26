@@ -1,9 +1,9 @@
 use ark_crypto_primitives::crh::{CRHScheme,sha256};
 
 
-
 pub fn sha256_bytes(input: Vec<u8>) ->Vec<u8>{
-    let digest = <sha256::Sha256 as CRHScheme>::evaluate(&{}, input).unwrap();
+    let empty_param = ();
+    let digest = <sha256::Sha256 as CRHScheme>::evaluate(&empty_param, input).unwrap();
     digest
 }   
 
@@ -60,6 +60,17 @@ fn test_sha256_bytes(){
     assert_eq!(expected, digest_str);
 }
 
+#[test]
+fn test_sha256_bytes_all_zeros(){
+    let expected = String::from("f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b");
+    let input = vec![0u8; 64];
+    // let mut rng = ark_std::test_rng();
+
+    let digest = sha256_bytes(input.clone());
+    // println!("{:?}", digest);
+    let digest_str = hex::encode(digest);
+    assert_eq!(expected, digest_str);
+}
 
 
 
