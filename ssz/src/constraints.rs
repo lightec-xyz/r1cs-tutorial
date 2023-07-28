@@ -9,66 +9,74 @@ use ark_ed_on_bls12_381::Fq;
 use ark_r1cs_std::prelude::*;
 use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError};
 
+const SHA256_BYTES_INPUT_LEN: usize = 64;
+const SHA256_BYTES_DIGEST_LEN: usize = 32;
+
 // pub type F = ark_ed_on_bls12_381::Fq;
 
+// //使用Vec<u8>作为输入，MerkleTreeVerification 中的输入参数是Vec<u8>
+// pub struct Sha256BytesGadget1 {
+//     pub input: Vec<u8>,
+//     pub output: Vec<u8>  //output 应该是可以mut的，以便带出计算结果
+// }
 
-//使用Vec<u8>作为输入，MerkleTreeVerification 中的输入参数是Vec<u8>
-pub struct Sha256BytesGadget1 {
-    pub input: Vec<u8>,
-    pub output: Vec<u8>  //output 应该是可以mut的，以便带出计算结果
-}
-
-impl <ConstraintF: PrimeField> ConstraintSynthesizer<ConstraintF> for Sha256BytesGadget1{
-    fn generate_constraints(
-        self,
-        cs: ConstraintSystemRef<ConstraintF>,
-    ) -> Result<(), SynthesisError> {
-        //此处将Vec<u8> 转换为 Vec<UInt8<ConstraintF>>, 显式的加了约束。
+// impl <ConstraintF: PrimeField> ConstraintSynthesizer<ConstraintF> for Sha256BytesGadget1{
+//     fn generate_constraints(
+//         self,
+//         cs: ConstraintSystemRef<ConstraintF>,
+//     ) -> Result<(), SynthesisError> {
+//         //此处将Vec<u8> 转换为 Vec<UInt8<ConstraintF>>, 显式的加了约束。
         
-        let input_var: Vec<UInt8<_>> = UInt8::new_witness_vec(ark_relations::ns!(cs, "input"), &self.input).unwrap();
-        let param_var = UnitVar::default();
+//         let input_var: Vec<UInt8<_>> = UInt8::new_witness_vec(ark_relations::ns!(cs, "input"), &self.input).unwrap();
+//         let param_var = UnitVar::default();
 
-        let digest_var = < Sha256Gadget<ConstraintF> as CRHSchemeGadget<Sha256, ConstraintF>>::evaluate(&param_var, &input_var).unwrap();
+//         let digest_var = < Sha256Gadget<ConstraintF> as CRHSchemeGadget<Sha256, ConstraintF>>::evaluate(&param_var, &input_var).unwrap();
      
-        //将digest_var 转换为Vec<u8>
-        let mut digest_bytes: Vec<u8> = vec![];
-        for e in digest_var.to_bytes().unwrap() {
-            digest_bytes.push(e.value().unwrap());
-        }
+//         //将digest_var 转换为Vec<u8>
+//         let mut digest_bytes: Vec<u8> = vec![];
+//         for e in digest_var.to_bytes().unwrap() {
+//             digest_bytes.push(e.value().unwrap());
+//         }
 
-        //如何赋值给self.output，赋值过程需要加约束吗？
-        self.output = digest_bytes;
+
+//         digest_var
+//         .0
+//         .iter()
+//         .map(f)
+
+//         //如何赋值给self.output，赋值过程需要加约束吗？
+//         self.output = digest_bytes;
     
-        Ok(())
-    }
-}
+//         Ok(())
+//     }
+// }
 
 //使用Vec<UInt8<ConstraintF>>，Sha256Gadget的输入参数是Vec<UInt8<ConstraintF>>这种形式
-pub struct Sha256BytesGadget2 <ConstraintF:PrimeField> {
+pub struct Sha256BytesGadget <ConstraintF:PrimeField> {
     pub input: Vec<UInt8<ConstraintF>>,
     pub output: Vec<UInt8<ConstraintF>>
 }
 
-
-
-
-impl <ConstraintF: PrimeField> ConstraintSynthesizer<ConstraintF> for Sha256BytesGadget2<ConstraintF>{
+impl <ConstraintF: PrimeField> ConstraintSynthesizer<ConstraintF> for Sha256BytesGadget<ConstraintF>{
     fn generate_constraints(
         self,
         cs: ConstraintSystemRef<ConstraintF>,
     ) -> Result<(), SynthesisError> {
-        //self.input 输入给evalute时没有显式的加约束关系，是隐式的加了吗？
+
+        assert_eq!(self.input.len(), SHA256_BYTES_INPUT_LEN);
+
         // Sha256Gadget的输入参数是Vec<UInt8<ConstraintF>>这种形式
         let param_var = UnitVar::default();
         let digest_var = < Sha256Gadget<ConstraintF> as CRHSchemeGadget<Sha256, ConstraintF>>::evaluate(&param_var, &self.input).unwrap();
         
-
+        assert_eq!(digest_var.value().unwrap().len(), SHA256_BYTES_DIGEST_LEN);
         //如何赋值给self.output，赋值过程需要加约束吗？
-        self.output = digest_var.to_bytes().unwrap();
+        //TODO(keep)
     
         Ok(())
     }
 }
+
 
 
 #[test]
@@ -127,4 +135,39 @@ fn test_crh_sha256() {
     //         len
     //     )
     // }
+}
+
+#[test]
+fn test_crh_sha256bytes() {
+
+    use ark_relations::{
+        ns,
+        r1cs::{ConstraintSystem, Namespace}
+    };
+    use ark_ed_on_bls12_381::Fr;
+
+    // let mut rng = ark_std::test_rng();
+    let cs = ConstraintSystem::<Fr>::new_ref();
+
+    fn to_byte_vars(cs: impl Into<Namespace<Fr>>, data: &[u8]) -> Vec<UInt8<Fr>> {
+        let cs = cs.into().cs();
+        UInt8::new_witness_vec(cs, data).unwrap()
+    }
+
+   
+    let input_str = vec![0u8; 64]; 
+    let input_var = to_byte_vars(ns!(cs, "input"), &input_str);
+    
+    let output_str = vec![0u8; 32];
+    let output_var = to_byte_vars(ns!(cs, "output"), &output_str);
+
+    let sha256_bytes_gadget = Sha256BytesGadget 
+    {
+        input: input_var,
+        output: output_var
+    };
+
+    let computed_output = sha256_bytes_gadget.generate_constraints(cs).unwrap();
+    println!("{:?}", computed_output)
+
 }
