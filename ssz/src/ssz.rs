@@ -61,13 +61,6 @@ fn ssz_phase0_sync_committee(
         ssz_pubkeys_input.extend_from_slice(&pubkeys[i]);
         ssz_pubkeys_input.extend_from_slice(&[0u8; 64 - G1_POINT_SIZE]);
 
-        // for j in 0..64 {
-        //     if j < G1_POINT_SIZE{
-        //         ssz_pubkeys_input.push(pubkeys[i][j]);
-        //     }else{
-        //         ssz_pubkeys_input.push(0);
-        //     }
-        // }
     }
 
     let ssz_pubkeys_output = ssz_array(&ssz_pubkeys_input, depth +1);
@@ -132,7 +125,7 @@ fn ssz_phase0_signing_root(header_root: &[u8; HASH_SIZE], domain: &[u8; HASH_SIZ
 
 // 从merkle leaf 和path 中恢复出merke root。
 fn ssz_restore_merkle_root(depth: usize, index: usize, leaf: [u8; HASH_SIZE], branch: &[[u8; HASH_SIZE]]) -> [u8; HASH_SIZE] {
-    let mut hashers = vec![Sha256Bytes; depth];
+    let hashers = vec![Sha256Bytes; depth];
     let mut first_offset;
     let mut second_offset;
 
