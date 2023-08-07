@@ -4,20 +4,19 @@ use ark_crypto_primitives::crh::sha256::{
     Sha256,
     constraints::{UnitVar,DigestVar, Sha256Gadget}
 };
-use ark_ff::{PrimeField, Field};
-use ark_ed_on_bls12_381::Fq;
+use ark_ff::{PrimeField};
 use ark_r1cs_std::prelude::*;
 use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError};
-use hex::ToHex;
-use crate::sha256::Sha256Bytes;
+use crate::sha256::*;
+
 
 const SHA256_BYTES_INPUT_LEN: usize = 64;
 const SHA256_BYTES_DIGEST_LEN: usize = 32;
 
-
 pub struct Sha256BytesGadget <ConstraintF:PrimeField> {
     pub input: Vec<UInt8<ConstraintF>>,
 }
+
 
 
 impl<ConstraintF: PrimeField> Default for Sha256BytesGadget<ConstraintF> {
@@ -31,11 +30,11 @@ impl<ConstraintF: PrimeField> Default for Sha256BytesGadget<ConstraintF> {
 
 impl<ConstraintF: PrimeField> Sha256BytesGadget<ConstraintF> {
     pub fn digest(data: &[UInt8<ConstraintF>]) -> Result<DigestVar<ConstraintF>, SynthesisError> { //self不是
-        assert_eq!(data.len(), SHA256_BYTES_INPUT_LEN);
+        assert_eq!(data.len(), SHA256_BYTES_INPUT_LEN); //??
         
         let param_var = UnitVar::default();
         let digest_var = < Sha256Gadget<ConstraintF> as CRHSchemeGadget<Sha256, ConstraintF>>::evaluate(&param_var, &data).unwrap();
-        assert_eq!(digest_var.value()?.len(), SHA256_BYTES_DIGEST_LEN);
+        assert_eq!(digest_var.value()?.len(), SHA256_BYTES_DIGEST_LEN);  //??
         Ok(digest_var)
     }
 
@@ -87,6 +86,7 @@ impl <ConstraintF: PrimeField> ConstraintSynthesizer<ConstraintF> for Sha256Byte
         Ok(()) //将() 输出
     }   
 }
+
 
 
 

@@ -3,6 +3,8 @@ use ark_std::rand::Rng;
 use core::borrow::Borrow;
 pub type Error = Box<dyn ark_std::error::Error>;
 
+
+#[derive(Clone)]
 pub struct Sha256Bytes;
 
 impl Sha256Bytes{

@@ -41,7 +41,7 @@ pub fn ssz_array(input: &Vec<u8>, depth:usize) ->Vec<u8>{
     let mut layer_input = input.to_vec();
     
     for i in 0..depth{
-        layer_input = ssz_layer(layer_input);
+        layer_input = ssz_layer(&layer_input);
     }
     
     layer_input.clone()
@@ -97,7 +97,7 @@ fn ssz_phase0_sync_committee(
 
 }
 
-
+//计算beacon block header
 fn ssz_phase0_beacon_block_header(
     slot: &[u8; 32],
     proposer_index: &[u8; 32],
@@ -119,7 +119,7 @@ fn ssz_phase0_beacon_block_header(
     result
 }
 
-
+//计算beacon block sign root
 fn ssz_phase0_signing_root(header_root: &[u8; HASH_SIZE], domain: &[u8; HASH_SIZE]) -> [u8; HASH_SIZE] {
     let mut input: Vec<u8> = Vec::with_capacity(64);
     input.extend_from_slice(header_root);
@@ -130,7 +130,7 @@ fn ssz_phase0_signing_root(header_root: &[u8; HASH_SIZE], domain: &[u8; HASH_SIZ
     result 
 }
 
-
+// 从merkle leaf 和path 中恢复出merke root。
 fn ssz_restore_merkle_root(depth: usize, index: usize, leaf: [u8; HASH_SIZE], branch: &[[u8; HASH_SIZE]]) -> [u8; HASH_SIZE] {
     let mut hashers = vec![Sha256Bytes; depth];
     let mut first_offset;
