@@ -94,7 +94,7 @@ impl <ConstraintF: PrimeField> ConstraintSynthesizer<ConstraintF> for Sha256Byte
 // 测试sha256BytesGadget
 fn test_sha256bytes_gadget(){
     use ark_relations::r1cs::{ConstraintSystem, Namespace};
-    use ark_ed_on_bls12_381::Fr;
+    use ark_bls12_381::Fr;
     use hex;
 
     fn to_byte_vars(cs: impl Into<Namespace<Fr>>, data: &[u8]) -> Vec<UInt8<Fr>> {
@@ -118,7 +118,7 @@ fn test_sha256bytes_gadget(){
 // 测试sha256BytesCircuit
 fn test_crh_sha256bytes_circuit() {
     use ark_relations::r1cs::ConstraintSystem;
-    use ark_ed_on_bls12_381::Fr;
+    use ark_bls12_381::Fr;
     use hex;
 
     // let mut rng = ark_std::test_rng();

@@ -124,6 +124,39 @@ pub struct SSZPhase0BeaconBlockHeaderGadget <ConstraintF:PrimeField> {
     body_root: Vec<UInt8<ConstraintF>>,
 }
 
+/*
+//生成BeaconBlockHeader 的hash。
+template SSZPhase0BeaconBlockHeader() {
+    signal input slot[32];
+    signal input proposerIndex[32];
+    signal input parentRoot[32];
+    signal input stateRoot[32];
+    signal input bodyRoot[32];
+    signal output out[32];
+
+    component sszBeaconBlockHeader = SSZArray(256, 3);
+    for (var i = 0; i < 256; i++) {
+        if (i < 32) {
+            sszBeaconBlockHeader.in[i] <== slot[i];
+        } else if (i < 64) {
+            sszBeaconBlockHeader.in[i] <== proposerIndex[i - 32];
+        } else if (i < 96) {
+            sszBeaconBlockHeader.in[i] <== parentRoot[i - 64];
+        } else if (i < 128) {
+            sszBeaconBlockHeader.in[i] <== stateRoot[i - 96];
+        } else if (i < 160) {
+            sszBeaconBlockHeader.in[i] <== bodyRoot[i - 128];
+        } else {
+            sszBeaconBlockHeader.in[i] <== 0;
+        }
+    }
+
+    for (var i = 0; i < 32; i++) {
+        out[i] <== sszBeaconBlockHeader.out[i];
+    }
+}
+
+*/
 impl<ConstraintF: PrimeField> SSZPhase0BeaconBlockHeaderGadget<ConstraintF> {
     pub fn digest(
         slot: Vec<UInt8<ConstraintF>>, 
@@ -246,7 +279,7 @@ impl<ConstraintF: PrimeField> SSZRestoreMerkleRootGadget<ConstraintF> {
 #[test]
 fn test_ssz_layer_gadget(){
     use ark_relations::r1cs::{ConstraintSystem, Namespace};
-    use ark_ed_on_bls12_381::Fr;
+    use ark_bls12_381::Fr;
     use hex;
 
     fn to_byte_vars(cs: impl Into<Namespace<Fr>>, data: &[u8]) -> Vec<UInt8<Fr>> {
@@ -267,7 +300,7 @@ fn test_ssz_layer_gadget(){
 #[test]
 fn test_ssz_array_gadget(){
     use ark_relations::r1cs::{ConstraintSystem, Namespace};
-    use ark_ed_on_bls12_381::Fr;
+    use ark_bls12_381::Fr;
     use hex;
 
     fn to_byte_vars(cs: impl Into<Namespace<Fr>>, data: &[u8]) -> Vec<UInt8<Fr>> {
@@ -289,7 +322,7 @@ fn test_ssz_array_gadget(){
 #[test]
 fn test_ssz_phase0_sync_committee_gadget_8pubkeys(){
     use ark_relations::r1cs::{ConstraintSystem, Namespace};
-    use ark_ed_on_bls12_381::Fr;
+    use ark_bls12_381::Fr;
     use hex;
 
     fn to_byte_vars(cs: impl Into<Namespace<Fr>>, data: &[u8]) -> Vec<UInt8<Fr>> {
@@ -314,7 +347,7 @@ fn test_ssz_phase0_sync_committee_gadget_8pubkeys(){
     let mut pubkeys_var = Vec::new();
 
     for i in 0..pubkeys.len() {
-        let pubkey_var: Vec<UInt8<ark_ff::Fp<ark_ff::MontBackend<ark_ed_on_bls12_381::FrConfig, 4>, 4>>> = to_byte_vars(cs.clone(), &pubkeys[i]);
+        let pubkey_var= to_byte_vars(cs.clone(), &pubkeys[i]);
         pubkeys_var.push(pubkey_var);
     }
 
@@ -335,7 +368,7 @@ fn test_ssz_phase0_sync_committee_gadget_8pubkeys(){
 #[test]
 fn test_ssz_phase0_beacon_block_header_gadget(){
     use ark_relations::r1cs::{ConstraintSystem, Namespace};
-    use ark_ed_on_bls12_381::Fr;
+    use ark_bls12_381::Fr;
     use hex;
 
     fn to_byte_vars(cs: impl Into<Namespace<Fr>>, data: &[u8]) -> Vec<UInt8<Fr>> {
@@ -370,7 +403,7 @@ fn test_ssz_phase0_beacon_block_header_gadget(){
 #[test]
 fn test_ssz_phase0_signing_root_gadget(){
     use ark_relations::r1cs::{ConstraintSystem, Namespace};
-    use ark_ed_on_bls12_381::Fr;
+    use ark_bls12_381::Fr;
     use hex;
 
     fn to_byte_vars(cs: impl Into<Namespace<Fr>>, data: &[u8]) -> Vec<UInt8<Fr>> {
